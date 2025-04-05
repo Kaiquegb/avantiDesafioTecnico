@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { FiGithub, FiSearch } from 'react-icons/fi';
 import './App.css';
 
 interface GitHubUser {
@@ -33,7 +34,7 @@ export default function App() {
         throw new Error(
           response.status === 403 
             ? 'Limite de requisições excedido. Aguarde 1 hora ou use um token GitHub.' 
-            : 'Usuário não encontrado'
+            : 'Nenhum perfil foi encontrado com esse nome de usuário. Tente novamente'
         );
       }
 

@@ -5,12 +5,16 @@ body {
   margin: 0;
   padding: 20px;
   color: #24292e;
+  justify-content: center; 
+  align-items: center;
 }
 
 .container {
-  max-width: 600px;
-  margin: 0 auto;
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Centraliza horizontalmente */
+  min-height: 100vh;
+  padding: 20px;
 }
 
 h1 {
@@ -60,11 +64,15 @@ button:disabled {
 }
 
 .loading-icon {
-  width: 20px;
-  height: 20px;
+  display: inline-block;
   vertical-align: middle;
+  animation: spin 1s linear infinite; /* Adiciona rotação contínua */
 }
 
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
 /* Mensagens de erro */
 .error-message {
   background-color: #ffebee;
