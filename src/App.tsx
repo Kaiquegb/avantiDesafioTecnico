@@ -1,33 +1,45 @@
 import { useState } from 'react';
+import './App.css';
 
-interface UserData {
+interface GitHubUser {
   avatar_url: string;
   name: string;
   login: string;
-  bio: string;
+  bio: string | null;
+  public_repos: number;
   followers: number;
   following: number;
-  public_repos: number;
+  message?: string; // tratar rate limit
 }
 
 export default function App() {
-  const [username, setUsername] = useState<string>('');
-  const [userData, setUserData] = useState<UserData | null>(null);
-  const [error, setError] = useState<string>('');
-  const [loading, setLoading] = useState<boolean>(false);
+  const [username, setUsername] = useState('');
+  const [userData, setUserData] = useState<GitHubUser | null>(null);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleSearch = async () => {
     if (!username.trim()) return;
 
     setLoading(true);
+    setError('');
+
     try {
       const response = await fetch(`https://api.github.com/users/${username}`);
-      if (!response.ok) throw new Error('Usuário não encontrado');
-      const data: UserData = await response.json();
+      const data: GitHubUser = await response.json();
+
+      if (!response.ok) {
+        // Trata rate limit (403) ou usuário não encontrado (404)
+        throw new Error(
+          response.status === 403 
+            ? 'Limite de requisições excedido. Aguarde 1 hora ou use um token GitHub.' 
+            : 'Usuário não encontrado'
+        );
+      }
+
       setUserData(data);
-      setError('');
-    } catch (err) {
-      setError('Nenhum perfil foi encontrado com esse nome de usuário. Tente novamente');
+    } catch (err: any) {
+      setError(err.message);
       setUserData(null);
     } finally {
       setLoading(false);
@@ -35,56 +47,59 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center pt-16 px-4">
-      {/* Título */}
-      <h1 className="text-3xl font-bold text-gray-800 mb-8">Perfil GitHub</h1>
+    <div className="container">
+      <h1>Perfil GitHub</h1>
 
-      {/* Campo de Busca */}
-      <div className="w-full max-w-md bg-white p-6 rounded-lg shadow-sm mb-4">
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            placeholder="Digite um usuário do Github"
-            className="flex-1 p-3 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-          />
-          <button
-            onClick={handleSearch}
-            disabled={loading}
-            className="bg-blue-500 text-white px-4 py-3 rounded hover:bg-blue-600 transition-colors disabled:opacity-50"
-          >
-            {loading ? 'Buscando...' : 'Buscar'}
-          </button>
-        </div>
+      <div className="search-container">
+        <input
+          type="text"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          placeholder="Digite um usuário do Github"
+          disabled={loading}
+        />
+        <button onClick={handleSearch} disabled={loading}>
+          {loading ? (
+            <img src="/src/assets/loading.svg" alt="Loading" className="loading-icon" />
+          ) : (
+            'Buscar'
+          )}
+        </button>
       </div>
 
-      {/* Mensagem de Erro */}
       {error && (
-        <div className="w-full max-w-md bg-white p-5 rounded-lg shadow-sm text-center">
-          <p className="text-red-500 font-medium">{error}</p>
+        <div className="error-message">
+          <p>{error}</p>
+          {error.includes('Limite') && (
+            <a 
+              href="https://docs.github.com/en/rest/overview/resources-in-the-rest-api#rate-limiting" 
+              target="_blank"
+              className="rate-limit-link"
+            >
+              Como resolver?
+            </a>
+          )}
         </div>
       )}
 
-      {/* Card de Perfil (aparece quando há dados) */}
       {userData && (
-        <div className="w-full max-w-md bg-white p-6 rounded-lg shadow-sm mt-4">
-          <div className="flex items-center gap-4 mb-4">
-            <img
-              src={userData.avatar_url}
-              alt="Avatar"
-              className="w-16 h-16 rounded-full border-2 border-gray-200"
-            />
+        <div className="profile-card">
+          <img src={userData.avatar_url} alt="Avatar" className="avatar" />
+          <h2>{userData.name || userData.login}</h2>
+          <p className="bio">{userData.bio || 'Sem biografia disponível.'}</p>
+          <div className="stats">
             <div>
-              <h2 className="font-bold text-xl">{userData.name || userData.login}</h2>
-              <p className="text-gray-600">@{userData.login}</p>
+              <span className="stat-number">{userData.public_repos}</span>
+              <span>Repositórios</span>
             </div>
-          </div>
-          <p className="text-gray-700 mb-4">{userData.bio || 'Sem biografia disponível.'}</p>
-          <div className="flex justify-between text-sm text-gray-600">
-            <span>Seguidores: {userData.followers}</span>
-            <span>Seguindo: {userData.following}</span>
-            <span>Repositórios: {userData.public_repos}</span>
+            <div>
+              <span className="stat-number">{userData.followers}</span>
+              <span>Seguidores</span>
+            </div>
+            <div>
+              <span className="stat-number">{userData.following}</span>
+              <span>Seguindo</span>
+            </div>
           </div>
         </div>
       )}
