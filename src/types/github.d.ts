@@ -6,4 +6,5 @@ export interface GitHubUser {
     public_repos: number;
     followers: number;
     following: number;
+    message?: string;
   }
